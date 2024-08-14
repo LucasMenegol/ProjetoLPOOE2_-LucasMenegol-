@@ -5,6 +5,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -12,6 +14,8 @@ import br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.dao.PersistenciaJPA;
 import br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.model.Cliente;
 import br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.model.Produto;
 import br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.model.Venda;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class VendaTela extends JFrame {
 
@@ -84,6 +88,7 @@ public class VendaTela extends JFrame {
                     venda.setProdutos(produtos);
                     persistencia.persist(venda);
                     atualizarTabela();
+                    limparCampos(); // Limpar campos após adicionar
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -91,32 +96,31 @@ public class VendaTela extends JFrame {
         });
 
         editButton.addActionListener(new ActionListener() {
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        try {
-            int selectedRow = table.getSelectedRow();
-            if (selectedRow >= 0) {
-                int id = (Integer) tableModel.getValueAt(selectedRow, 0);
-                Venda venda = (Venda) persistencia.find(Venda.class, id);
-                if (venda != null) {
-                    venda.setValor(Double.parseDouble(valorField.getText()));
-                    venda.setCliente((Cliente) clienteComboBox.getSelectedItem());
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    int selectedRow = table.getSelectedRow();
+                    if (selectedRow >= 0) {
+                        int id = (Integer) tableModel.getValueAt(selectedRow, 0);
+                        Venda venda = (Venda) persistencia.find(Venda.class, id);
+                        if (venda != null) {
+                            venda.setValor(Double.parseDouble(valorField.getText()));
+                            venda.setCliente((Cliente) clienteComboBox.getSelectedItem());
 
-                    List<Produto> produtos = new ArrayList<>();
-                    produtos.add((Produto) produtoComboBox.getSelectedItem());
-                    venda.setProdutos(produtos);
+                            List<Produto> produtos = new ArrayList<>();
+                            produtos.add((Produto) produtoComboBox.getSelectedItem());
+                            venda.setProdutos(produtos);
 
-                    persistencia.persist(venda);
-                    atualizarTabela();
+                            persistencia.persist(venda);
+                            atualizarTabela();
+                            limparCampos(); // Limpar campos após editar
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-});
-
-
+        });
 
         deleteButton.addActionListener(new ActionListener() {
             @Override
@@ -128,9 +132,34 @@ public class VendaTela extends JFrame {
                         Venda venda = (Venda) persistencia.find(Venda.class, id);
                         persistencia.remover(venda);
                         atualizarTabela();
+                        limparCampos(); // Limpar campos após excluir
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                }
+            }
+        });
+
+        // Adicionando o MouseListener à tabela para exibir informações ao clicar
+        table.addMouseListener(new MouseAdapter() { // Adiciona um MouseListener à tabela para capturar eventos de clique do mouse.
+            @Override
+            public void mouseClicked(MouseEvent e) { // Sobrescreve o método mouseClicked para definir a ação quando um clique do mouse ocorre na tabela.
+                int selectedRow = table.getSelectedRow(); // Obtém o índice da linha selecionada na tabela.
+                if (selectedRow >= 0) { // Verifica se uma linha foi realmente selecionada (índice válido).
+                    int id = (Integer) tableModel.getValueAt(selectedRow, 0); // Obtém o ID da venda da linha selecionada (assumindo que o ID está na primeira coluna).
+                    Venda venda = null;
+                    try {
+                        venda = (Venda) persistencia.find(Venda.class, id); // Tenta buscar a venda no banco de dados usando o ID obtido.
+                    } catch (Exception ex) {
+                        Logger.getLogger(VendaTela.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    if (venda != null) { // Verifica se a venda foi encontrada com sucesso.
+                        valorField.setText(String.valueOf(venda.getValor())); // Define o valor da venda no campo de texto correspondente.
+                        clienteComboBox.setSelectedItem(venda.getCliente()); // Seleciona o cliente da venda no JComboBox.
+
+                        // Supondo que a venda tenha um único produto
+                        produtoComboBox.setSelectedItem(venda.getProdutos().get(0));
+                    }
                 }
             }
         });
@@ -156,28 +185,34 @@ public class VendaTela extends JFrame {
     }
 
     private void atualizarClientes() {
-    try {
-        List<Cliente> clientes = persistencia.findAll(Cliente.class);
-        clienteComboBox.removeAllItems();
-        for (Cliente cliente : clientes) {
-            clienteComboBox.addItem(cliente);
+        try {
+            List<Cliente> clientes = persistencia.findAll(Cliente.class);
+            clienteComboBox.removeAllItems();
+            for (Cliente cliente : clientes) {
+                clienteComboBox.addItem(cliente);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
     }
-}
 
-private void atualizarProdutos() {
-    try {
-        List<Produto> produtos = persistencia.findAll(Produto.class);
-        produtoComboBox.removeAllItems();
-        for (Produto produto : produtos) {
-            produtoComboBox.addItem(produto);
+    private void atualizarProdutos() {
+        try {
+            List<Produto> produtos = persistencia.findAll(Produto.class);
+            produtoComboBox.removeAllItems();
+            for (Produto produto : produtos) {
+                produtoComboBox.addItem(produto);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
     }
-}
+
+    private void limparCampos() {
+        valorField.setText("");
+        clienteComboBox.setSelectedIndex(-1);
+        produtoComboBox.setSelectedIndex(-1);
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new VendaTela().setVisible(true));
