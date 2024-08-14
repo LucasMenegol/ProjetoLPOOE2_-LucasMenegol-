@@ -1,6 +1,8 @@
 import br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.dao.PersistenciaJPA;
 import br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.model.*;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +25,7 @@ public class TestePersistenciaObjetos {
     }
 
     @Test
-    public void testPersistenciaClienteFuncionarioVenda() throws Exception {
+    public void testPersistenciaClienteProdutoVenda() throws Exception {
         // Criação de Cliente
         Cliente cliente = new Cliente();
         cliente.setNome("Cliente A");
@@ -34,15 +36,20 @@ public class TestePersistenciaObjetos {
         // Persistência do Cliente
         jpa.persist(cliente);
 
-        // Criação de Funcionário
-        Funcionario funcionario = new Funcionario();
-        funcionario.setNome("Funcionario A");
-        funcionario.setCpf("123.456.789-00");
-        funcionario.setCargo("Vendedor");
-        funcionario.setSalario(3000.00);
+        // Criação de Produtos
+        Produto produto1 = new Produto();
+        produto1.setNome("Produto 1");
+        produto1.setPreco(50.00);
+        produto1.setQuantidade(10);
 
-        // Persistência do Funcionário
-        jpa.persist(funcionario);
+        Produto produto2 = new Produto();
+        produto2.setNome("Produto 2");
+        produto2.setPreco(100.00);
+        produto2.setQuantidade(5);
+
+        // Persistência dos Produtos
+        jpa.persist(produto1);
+        jpa.persist(produto2);
 
         // Criação de Venda
         Venda venda = new Venda();
@@ -50,7 +57,12 @@ public class TestePersistenciaObjetos {
         venda.setData(dataVenda);
         venda.setValor(150.00);
         venda.setCliente(cliente);
-        venda.setFuncionario(funcionario);
+
+        // Adiciona os produtos à venda
+        List<Produto> produtos = new ArrayList<>();
+        produtos.add(produto1);
+        produtos.add(produto2);
+        venda.setProdutos(produtos);
 
         // Persistência da Venda
         jpa.persist(venda);
@@ -60,16 +72,20 @@ public class TestePersistenciaObjetos {
         assertNotNull(clientePersistido);
         assertEquals("Cliente A", clientePersistido.getNome());
 
-        Funcionario funcionarioPersistido = (Funcionario) jpa.find(Funcionario.class, funcionario.getId());
-        assertNotNull(funcionarioPersistido);
-        assertEquals("Funcionario A", funcionarioPersistido.getNome());
+        Produto produto1Persistido = (Produto) jpa.find(Produto.class, produto1.getId());
+        assertNotNull(produto1Persistido);
+        assertEquals("Produto 1", produto1Persistido.getNome());
+
+        Produto produto2Persistido = (Produto) jpa.find(Produto.class, produto2.getId());
+        assertNotNull(produto2Persistido);
+        assertEquals("Produto 2", produto2Persistido.getNome());
 
         Venda vendaPersistida = (Venda) jpa.find(Venda.class, venda.getId());
         assertNotNull(vendaPersistida);
         assertEquals(150.00, vendaPersistida.getValor(), 0.01);
         assertEquals(dataVenda, vendaPersistida.getData());
-        
-        System.out.println("Lista vendas do cliente"+cliente.getVendas());
-        
+        assertEquals(2, vendaPersistida.getProdutos().size());  // Verifica se há dois produtos na venda
+
+        System.out.println("Lista de vendas do cliente: " + clientePersistido.getVendas());
     }
 }

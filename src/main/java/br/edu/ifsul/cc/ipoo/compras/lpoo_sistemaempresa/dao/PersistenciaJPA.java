@@ -1,9 +1,11 @@
 package br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.dao;
 
 import br.edu.ifsul.cc.ipoo.compras.lpoo_sistemaempresa.model.*;
+import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
 
 /**
  *
@@ -49,7 +51,15 @@ public class PersistenciaJPA implements InterfacePersistencia {
         entity.getTransaction().commit();
     }
     
-   
+   public <T> List<T> findAll(Class<T> clazz) throws Exception {
+        try {
+            TypedQuery<T> query = entity.createQuery("SELECT e FROM " + clazz.getSimpleName() + " e", clazz);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Erro ao recuperar os registros.", e);
+        }
+    }
     
 
     

@@ -81,12 +81,13 @@ public class Cliente {
 
     // Métodos de negócios
 
-    public void realizarCompra() {
-        // Implementação do método realizarCompra
-    }
-
     public void consultarHistoricoDeCompras() {
         // Implementação do método consultarHistoricoDeCompras
     }
+    
+    @Override
+    public String toString() {
+    return nome; // para Cliente
+}
 }
 
